@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from shadow_debugger.patch_check import check_patch_syntax

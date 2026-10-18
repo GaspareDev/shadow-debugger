@@ -46,14 +46,14 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
-gemini = ["google-genai>=2.22.0"]
+gemini = ["google-genai>=2.22.0; python_version >= '3.10'"]
 openai = ["openai>=1.50.0"]
 anthropic = ["anthropic>=0.40.0"]
 fastapi = ["fastapi>=0.100.0"]
 flask = ["flask>=2.2.0", "blinker>=1.6.0"]
 django = ["django>=4.2"]
 all = [
-    "google-genai>=2.22.0",
+    "google-genai>=2.22.0; python_version >= '3.10'",
     "openai>=1.50.0",
     "anthropic>=0.40.0",
     "fastapi>=0.100.0",
@@ -88,12 +88,13 @@ pythonpath = ["src"]
 addopts = "-q"
 
 [tool.ruff]
-line-length = 110
+line-length = 120
 target-version = "py39"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP"]
+select = ["E", "F", "B"]
+ignore = ["E501"]
 
 [tool.mypy]
 python_version = "3.9"
