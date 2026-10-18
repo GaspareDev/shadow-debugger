@@ -1,25 +1,49 @@
-"""Writes diagnoses to Markdown files, the ``shadow_debugger`` logger and (optionally) stderr."""
+"""Writes diagnoses to Markdown/JSON files, the logger and (optionally) stderr."""
 
 from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import re
 import sys
 import threading
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Sequence
+
+from .config import REPORT_FORMATS, ReportFormat
 
 logger = logging.getLogger("shadow_debugger")
 
 _UNSAFE_FILENAME_CHARS = re.compile(r"[^A-Za-z0-9_.-]+")
 
 
+def _json_context(value: Any) -> Any:
+    """Keep already-redacted data, representing nonfinite numbers as JSON strings."""
+    if isinstance(value, float) and not math.isfinite(value):
+        if math.isnan(value):
+            return "NaN"
+        return "Infinity" if value > 0 else "-Infinity"
+    if isinstance(value, dict):
+        return {key: _json_context(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_context(item) for item in value]
+    return value
+
+
 class ReportManager:
-    def __init__(self, output_dir: Optional[str] = "./shadow_reports", print_to_console: bool = False) -> None:
+    def __init__(
+        self,
+        output_dir: Optional[str] = "./shadow_reports",
+        print_to_console: bool = False,
+        report_format: ReportFormat = "markdown",
+    ) -> None:
+        if report_format not in REPORT_FORMATS:
+            raise ValueError("report_format must be 'markdown', 'json', or 'both'")
         self.output_dir = output_dir
         self.print_to_console = print_to_console
+        self.report_format = report_format
         self._dir_lock = threading.Lock()
         self._dir_ready = False
 
@@ -32,19 +56,40 @@ class ReportManager:
                 self._dir_ready = True
         return self.output_dir
 
-    def _new_report_path(self, error_context: Dict[str, Any], now: datetime) -> str:
+    @staticmethod
+    def _remove_empty_reservations(paths: Sequence[str]) -> None:
+        for path in paths:
+            try:
+                if os.path.getsize(path) == 0:
+                    os.unlink(path)
+            except FileNotFoundError:
+                pass
+            except OSError:
+                logger.warning("Could not remove empty report reservation %s", path, exc_info=True)
+
+    def _new_report_paths(
+        self, error_context: Dict[str, Any], now: datetime, extensions: Sequence[str]
+    ) -> List[str]:
         directory = self._ensure_dir()
         exc_type = _UNSAFE_FILENAME_CHARS.sub("_", str(error_context.get("exception_type", "Error")))[:60]
         fingerprint = str(error_context.get("fingerprint", ""))[:8] or "nofp"
         base = f"incident_{now.strftime('%Y%m%d_%H%M%S')}_{exc_type}_{fingerprint}"
         for suffix in range(1000):
-            path = os.path.join(directory, f"{base}{'' if suffix == 0 else f'_{suffix}'}.md")
+            stem = f"{base}{'' if suffix == 0 else f'_{suffix}'}"
+            paths = [os.path.join(directory, f"{stem}.{extension}") for extension in extensions]
+            reserved: List[str] = []
             try:
-                # 'x' mode fails if the file exists: no silent overwrite between workers.
-                with open(path, "x", encoding="utf-8"):
-                    return path
+                for path in paths:
+                    # Reserve every sidecar before writing; never overwrite another incident.
+                    with open(path, "x", encoding="utf-8"):
+                        reserved.append(path)
             except FileExistsError:
+                self._remove_empty_reservations(reserved)
                 continue
+            except Exception:
+                self._remove_empty_reservations(reserved)
+                raise
+            return paths
         raise OSError(f"Could not allocate a unique report filename for {base}")
 
     def render(self, error_context: Dict[str, Any], ai_analysis: str, timestamp: datetime) -> str:
@@ -81,15 +126,48 @@ class ReportManager:
         return "\n".join(parts)
 
     def report(self, error_context: Dict[str, Any], ai_analysis: str) -> Optional[str]:
-        """Persist and announce a diagnosis. Returns the report path (or None)."""
+        """Persist and announce a diagnosis; return the Markdown path in ``both`` mode.
+
+        JSON mode returns its JSON path. With file output disabled, return None.
+        The caller supplies the already-redacted context; serialization does not
+        capture or redact additional data.
+        """
         now = datetime.now(timezone.utc)
         exc_type = error_context.get("exception_type", "Error")
         saved_path: Optional[str] = None
 
         if self.output_dir:
-            saved_path = self._new_report_path(error_context, now)
-            with open(saved_path, "w", encoding="utf-8") as fh:
-                fh.write(self.render(error_context, ai_analysis, now))
+            contents: List[str] = []
+            extensions: List[str] = []
+            if self.report_format in ("json", "both"):
+                contents.append(
+                    json.dumps(
+                        {
+                            "timestamp": now.isoformat(),
+                            "error_context": _json_context(error_context),
+                            "diagnosis": ai_analysis,
+                        },
+                        indent=2,
+                        ensure_ascii=False,
+                        allow_nan=False,
+                    ) + "\n"
+                )
+                extensions.append("json")
+            if self.report_format in ("markdown", "both"):
+                # Validate JSON before Markdown's legacy object-string fallback,
+                # while retaining Markdown as the primary output in both mode.
+                contents.insert(0, self.render(error_context, ai_analysis, now))
+                extensions.insert(0, "md")
+            # Render first so serialization errors do not leave reserved files.
+            paths = self._new_report_paths(error_context, now, extensions)
+            try:
+                for path, content in zip(paths, contents):
+                    with open(path, "w", encoding="utf-8") as fh:
+                        fh.write(content)
+            except Exception:
+                self._remove_empty_reservations(paths)
+                raise
+            saved_path = paths[0]
 
         logger.info(
             "Incident diagnosed: %s: %s (report: %s)",

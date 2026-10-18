@@ -52,7 +52,11 @@ class ShadowCore:
             timeout=config.request_timeout,
             fallback_models=config.fallback_models,
         )
-        self.reporter = ReportManager(output_dir=config.output_dir, print_to_console=config.print_to_console)
+        self.reporter = ReportManager(
+            output_dir=config.output_dir,
+            print_to_console=config.print_to_console,
+            report_format=config.report_format,
+        )
         self.throttler = ErrorThrottler(config.cooldown_seconds, config.max_tracked_errors)
 
         # Bounded queue: an error flood can never exhaust memory.

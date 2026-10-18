@@ -11,7 +11,7 @@ from functools import wraps
 from typing import Any, Callable, Dict, Optional, Sequence, TypeVar, Union, overload
 
 from ._version import __version__
-from .config import ShadowConfig
+from .config import ReportFormat, ShadowConfig
 from .core import ShadowCore
 from .integrations import (
     ASGIWatcherMiddleware,
@@ -60,6 +60,7 @@ def init(
     redact_patterns: Sequence[str] = (),
     fallback_models: Sequence[str] = (),
     config: Optional[ShadowConfig] = None,
+    report_format: ReportFormat = "markdown",
 ) -> ShadowCore:
     """Initialize (or re-initialize) Shadow Debugger.
 
@@ -95,6 +96,7 @@ def init(
             redact_keys=redact_keys,
             redact_patterns=redact_patterns,
             fallback_models=fallback_models,
+            report_format=report_format,
         )
 
     with _STATE_LOCK:
