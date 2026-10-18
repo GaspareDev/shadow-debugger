@@ -232,7 +232,7 @@ def _install_global_hooks_locked() -> None:
     _ORIGINAL_SYS_EXCEPTHOOK = sys.excepthook
     _ORIGINAL_THREADING_EXCEPTHOOK = getattr(threading, "excepthook", None)
 
-    def _sys_excepthook(exc_type: type, exc_value: BaseException, exc_tb: Any) -> None:
+    def _sys_excepthook(exc_type: type[BaseException], exc_value: BaseException, exc_tb: Any) -> None:
         if not issubclass(exc_type, (KeyboardInterrupt, SystemExit)):
             core = _CORE_INSTANCE
             if core is not None and not core.is_closed:
