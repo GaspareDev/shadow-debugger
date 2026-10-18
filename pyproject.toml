@@ -1,0 +1,102 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shadow-debugger"
+dynamic = ["version"]
+description = "Non-blocking AI-powered background error diagnosis and root-cause analysis for Python applications and web APIs."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+authors = [
+    { name = "GaspareDev" }
+]
+keywords = [
+    "debugging",
+    "error-tracking",
+    "observability",
+    "llm",
+    "ai",
+    "gemini",
+    "ollama",
+    "openai",
+    "anthropic",
+    "fastapi",
+    "flask",
+    "django",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Bug Tracking",
+    "Topic :: Software Development :: Debuggers",
+    "Topic :: System :: Monitoring",
+    "Typing :: Typed",
+]
+# Core package has ZERO mandatory third-party dependencies (Ollama works out of the box).
+dependencies = []
+
+[project.optional-dependencies]
+gemini = ["google-genai>=2.22.0"]
+openai = ["openai>=1.50.0"]
+anthropic = ["anthropic>=0.40.0"]
+fastapi = ["fastapi>=0.100.0"]
+flask = ["flask>=2.2.0", "blinker>=1.6.0"]
+django = ["django>=4.2"]
+all = [
+    "google-genai>=2.22.0",
+    "openai>=1.50.0",
+    "anthropic>=0.40.0",
+    "fastapi>=0.100.0",
+    "flask>=2.2.0",
+    "blinker>=1.6.0",
+]
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27.0",
+    "ruff>=0.6.0",
+    "mypy>=1.11.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/GaspareDev/shadow-debugger"
+Repository = "https://github.com/GaspareDev/shadow-debugger"
+Issues = "https://github.com/GaspareDev/shadow-debugger/issues"
+Changelog = "https://github.com/GaspareDev/shadow-debugger/blob/main/CHANGELOG.md"
+
+[tool.setuptools.dynamic]
+version = { attr = "shadow_debugger._version.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+shadow_debugger = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py39"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.9"
+packages = ["shadow_debugger"]
+mypy_path = "src"
+ignore_missing_imports = true
