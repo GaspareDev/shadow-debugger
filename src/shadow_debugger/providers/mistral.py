@@ -1,8 +1,11 @@
+"""Mistral AI provider (``pip install shadow-debugger[mistral]``)."""
+
 from __future__ import annotations
 
-from .base import Provider, ProviderError, register_provider
-from typing import Any, Optional
 import threading
+from typing import Any, Optional
+
+from .base import Provider, ProviderError, register_provider
 
 
 @register_provider("mistral")
@@ -15,16 +18,24 @@ class MistralProvider(Provider):
         self._client: Optional[Any] = None
         self._client_lock = threading.Lock()
 
-    def _get_client(self):
+    def _get_client(self) -> Any:
         with self._client_lock:
             if self._client is None:
                 try:
-                    from mistralai.client import Mistral
-                except ImportError as exc:
-                    raise ProviderError(
-                        "mistral: pacakge is not installed. Run: pip install 'shadow-debugger[mistral]'"
-                    ) from exc
-                self._client = Mistral(api_key=self.api_key)
+                    from mistralai import Mistral
+                except ImportError:
+                    try:
+                        from mistralai.client import Mistral  # type: ignore[no-redef]
+                    except ImportError as exc:
+                        raise ProviderError(
+                            "mistral: package not installed. Run: pip install 'shadow-debugger[mistral]'"
+                        ) from exc
+                kwargs: dict[str, Any] = {"api_key": self.api_key}
+                if self.base_url:
+                    kwargs["server_url"] = self.base_url
+                if self.timeout:
+                    kwargs["timeout_ms"] = int(self.timeout * 1000)
+                self._client = Mistral(**kwargs)
 
             return self._client
 
@@ -33,21 +44,15 @@ class MistralProvider(Provider):
         client = self._get_client()
         try:
             response = client.chat.complete(
-                model=self.default_model,
+                model=self.model,
                 messages=[
-                    {
-                        "role": "system",
-                        "content": system
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": prompt},
+                ],
             )
         except Exception as exc:
             raise ProviderError(f"mistral: request to {self.model} failed: {exc}") from exc
         content = response.choices[0].message.content if response.choices else None
         if not content:
             raise ProviderError(f"mistral: empty response from {self.model}")
-        return str(content)
+        return str(content)

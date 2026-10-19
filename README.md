@@ -65,6 +65,7 @@ pip install shadow-debugger
 pip install "shadow-debugger[gemini]"
 pip install "shadow-debugger[openai]"
 pip install "shadow-debugger[anthropic]"
+pip install "shadow-debugger[mistral]"
 pip install "shadow-debugger[fastapi]"
 pip install "shadow-debugger[flask]"
 pip install "shadow-debugger[django]"
@@ -99,6 +100,9 @@ shadow_debugger.init(provider="openai", model="gpt-5.4-nano")
 
 # Uses ANTHROPIC_API_KEY
 shadow_debugger.init(provider="anthropic", model="claude-haiku-5-5")
+
+# Uses MISTRAL_API_KEY
+shadow_debugger.init(provider="mistral", model="mistral-small-latest")
 ```
 
 ---
@@ -181,9 +185,9 @@ All options can be passed to `shadow_debugger.init(...)`:
 
 | Option | Default | Description |
 | :--- | :--- | :--- |
-| `provider` | `"gemini"` | `"gemini"`, `"ollama"`, `"openai"`, `"anthropic"`, or a `Provider` instance. |
+| `provider` | `"gemini"` | `"gemini"`, `"ollama"`, `"openai"`, `"anthropic"`, `"mistral"`, or a `Provider` instance. |
 | `model` | `None` | Model name. Uses the provider default if omitted. |
-| `api_key` | `None` | API key (falls back to `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`). |
+| `api_key` | `None` | API key (falls back to `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `MISTRAL_API_KEY`). |
 | `base_url` | `None` | Custom URL for Ollama (`OLLAMA_HOST`) or OpenAI-compatible servers. |
 | `output_dir` | `"./shadow_reports"` | Folder for reports (`None` disables file output). |
 | `report_format` | `"markdown"` | `"markdown"`, `"json"`, or `"both"`. Paired reports use the same filename stem. |
@@ -228,6 +232,18 @@ Markdown output remains the default.
 
 ---
 
+## CLI (`list` & `show`)
+
+Inspect local Markdown reports from the terminal:
+
+```bash
+python -m shadow_debugger list
+python -m shadow_debugger show latest
+python -m shadow_debugger show <filename-or-fingerprint> --dir ./shadow_reports
+```
+
+---
+
 ## Writing a custom provider
 
 ```python
@@ -254,10 +270,10 @@ shadow_debugger.init(provider="my-gateway")
 I'm actively looking for feedback and contributors. A few areas where PRs are very welcome:
 
 - [ ] Webhook / notification sinks (Slack, Discord, Telegram, GitHub Issues)
-- [ ] Additional providers (Mistral, LiteLLM, AWS Bedrock)
+- [x] Additional providers (Mistral added; LiteLLM, AWS Bedrock welcome)
 - [x] Structured JSON output option alongside Markdown reports
 - [ ] Celery / background worker task integration
-- [ ] CLI command to browse and filter local reports in `./shadow_reports`
+- [x] CLI command to browse and filter local reports in `./shadow_reports`
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup instructions.
 

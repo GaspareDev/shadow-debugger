@@ -251,7 +251,7 @@ def test_json_write_open_error_keeps_completed_markdown_and_removes_empty_sideca
         if path.parent == tmp_path and path.suffix == ".json" and mode == "w":
             markdown = path.with_suffix(".md")
             markdown_bytes = markdown.read_bytes()
-            assert DIAGNOSIS.strip() in markdown_bytes.decode("utf-8")
+            assert DIAGNOSIS.strip() in markdown.read_text(encoding="utf-8")
             assert path.exists() and path.stat().st_size == 0
             completed.append((markdown, markdown_bytes, path))
             raise failure

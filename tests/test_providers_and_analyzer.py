@@ -11,6 +11,7 @@ from shadow_debugger.analyzer import AIAnalyzer, build_prompt
 from shadow_debugger.core import ShadowCore
 from shadow_debugger.providers import Provider, ProviderError, create_provider, register_provider
 from shadow_debugger.providers.gemini import GeminiProvider
+from shadow_debugger.providers.mistral import MistralProvider
 from shadow_debugger.providers.ollama import normalize_host
 
 
@@ -81,6 +82,33 @@ def test_ollama_host_normalization() -> None:
     assert normalize_host("http://my-box:11434/") == "http://my-box:11434"
 
 
+def test_mistral_provider_uses_configured_model_and_raises_without_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("MISTRAL_API_KEY", raising=False)
+    missing = MistralProvider(api_key=None)
+    with pytest.raises(ProviderError, match="missing API key"):
+        missing.complete("sys", "user")
+
+    provider = MistralProvider(model="mistral-large-latest", api_key="fake-mistral-key")
+    fake_client = MagicMock()
+    fake_choice = MagicMock()
+    fake_choice.message.content = "### 1. Root Cause Summary\nFixed via Mistral."
+    fake_response = MagicMock()
+    fake_response.choices = [fake_choice]
+    fake_client.chat.complete.return_value = fake_response
+
+    with patch.object(provider, "_get_client", return_value=fake_client):
+        out = provider.complete("system instructions", "prompt body")
+
+    assert "Fixed via Mistral." in out
+    fake_client.chat.complete.assert_called_once_with(
+        model="mistral-large-latest",
+        messages=[
+            {"role": "system", "content": "system instructions"},
+            {"role": "user", "content": "prompt body"},
+        ],
+    )
+
+
 def test_provider_failure_does_not_write_fake_report(tmp_path: Path) -> None:
     class FailingProvider(Provider):
         default_model = "broken"
@@ -99,3 +127,4 @@ def test_provider_failure_does_not_write_fake_report(tmp_path: Path) -> None:
         assert list(tmp_path.glob("*.md")) == []
     finally:
         core.shutdown(timeout=2.0)
+

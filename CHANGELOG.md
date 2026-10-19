@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- Added `python -m shadow_debugger list|show` CLI to inspect local Markdown reports in `./shadow_reports`.
+- Added optional JSON incident reports (`report_format="json"` or `"both"`) alongside Markdown (#6).
+- Added built-in `mistral` LLM provider (`MistralProvider`, `MISTRAL_API_KEY`, `pip install "shadow-debugger[mistral]"`) (#7).
+- Added `python -m shadow_debugger list|show` CLI to inspect local Markdown reports in `./shadow_reports` (#8).
 
 ## 0.1.0 (2026-10-18)
 
