@@ -49,7 +49,7 @@ dependencies = []
 gemini = ["google-genai>=2.22.0; python_version >= '3.10'"]
 openai = ["openai>=1.50.0"]
 anthropic = ["anthropic>=0.40.0"]
-mistral = ["mistralai>=1.0.0"]
+mistral = ["mistralai>=2.0.0"]
 fastapi = ["fastapi>=0.100.0"]
 flask = ["flask>=2.2.0", "blinker>=1.6.0"]
 django = ["django>=4.2"]
@@ -57,7 +57,7 @@ all = [
     "google-genai>=2.22.0; python_version >= '3.10'",
     "openai>=1.50.0",
     "anthropic>=0.40.0",
-    "mistralai>=1.0.0",
+    "mistralai>=2.0.0",
     "fastapi>=0.100.0",
     "flask>=2.2.0",
     "blinker>=1.6.0",

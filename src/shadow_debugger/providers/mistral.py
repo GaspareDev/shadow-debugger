@@ -22,14 +22,11 @@ class MistralProvider(Provider):
         with self._client_lock:
             if self._client is None:
                 try:
-                    from mistralai import Mistral
-                except ImportError:
-                    try:
-                        from mistralai.client import Mistral  # type: ignore[no-redef]
-                    except ImportError as exc:
-                        raise ProviderError(
-                            "mistral: package not installed. Run: pip install 'shadow-debugger[mistral]'"
-                        ) from exc
+                    from mistralai.client import Mistral
+                except ImportError as exc:
+                    raise ProviderError(
+                        "mistral: package not installed. Run: pip install 'shadow-debugger[mistral]'"
+                    ) from exc
                 kwargs: dict[str, Any] = {"api_key": self.api_key}
                 if self.base_url:
                     kwargs["server_url"] = self.base_url
