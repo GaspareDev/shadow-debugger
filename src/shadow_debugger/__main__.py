@@ -13,17 +13,17 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 
 def _reports_dir(path: Optional[str]) -> Path:
     return Path(path or "./shadow_reports").resolve()
 
 
-def _parse_report(path: Path) -> dict:
+def _parse_report(path: Path) -> Dict[str, Any]:
     """Extract key fields from a report Markdown file."""
     text = path.read_text(encoding="utf-8", errors="replace")
-    result = {
+    result: Dict[str, Any] = {
         "path": path,
         "filename": path.name,
         "timestamp": None,
