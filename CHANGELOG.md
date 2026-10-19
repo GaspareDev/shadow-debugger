@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 (2026-10-19)
 
 - Added optional JSON incident reports (`report_format="json"` or `"both"`) alongside Markdown (#6).
 - Added built-in `mistral` LLM provider (`MistralProvider`, `MISTRAL_API_KEY`, `pip install "shadow-debugger[mistral]"`) (#7).
