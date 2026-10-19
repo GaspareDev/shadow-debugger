@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Added `python -m shadow_debugger list|show` CLI to inspect local Markdown reports in `./shadow_reports`.
+
 ## 0.1.0 (2026-10-18)
 
 Initial public release:
