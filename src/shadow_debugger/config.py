@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Literal, Optional, Sequence, Union
 
 if TYPE_CHECKING:
     from .providers.base import Provider
+
+ReportFormat = Literal["markdown", "json", "both"]
+REPORT_FORMATS = ("markdown", "json", "both")
 
 
 @dataclass
@@ -39,7 +42,12 @@ class ShadowConfig:
     shutdown_timeout: float = 10.0
     context_lines: int = 5
 
+    # Appended to preserve the positional arguments of existing configurations.
+    report_format: ReportFormat = "markdown"
+
     def __post_init__(self) -> None:
+        if self.report_format not in REPORT_FORMATS:
+            raise ValueError("report_format must be 'markdown', 'json', or 'both'")
         if self.max_workers < 1:
             raise ValueError("max_workers must be >= 1")
         if self.max_queue_size < 1:
